@@ -13,7 +13,7 @@
 
 
 ;Test command line
-; "C:\Program Files (x86)\AutoIt3\AutoIt3.exe" "D:\MRI Processing\MRI Processing Software\Tools\ComputeTractography.au3" "c:\Program Files\BrainSuite18a\bin\BrainSuite18a.exe"   "D:\MRI Processing\MRI Data\WPAFB HyperO2\CW002\Brainsuite" "101_b_mprage_2.FRACT.T1_coord.bst"
+; "C:\Program Files (x86)\AutoIt3\Beta\AutoIt3.exe" "D:\MRI Processing\MRI Processing Software\Tools\ComputeTractography.au3" "c:\Program Files\BrainSuite18a\bin\BrainSuite18a.exe"   "D:\MRI Processing\MRI Data\WPAFB HyperO2\CW002\Brainsuite" "101_b_mprage_2.FRACT.T1_coord.bst"
 
 _DebugSetup("Check ComputeTractography", True) ; start displaying debug environment
 
@@ -75,6 +75,7 @@ _DebugOut("$vClientHeight:" & $vClientHeight)
 
 WinActivate($hWnd)
 Send("!t")     ;Alt-T
+Sleep(1000)
 Send("d")
 
 
@@ -165,10 +166,11 @@ If $vFoundTarget then
    Send("^v") ;Ctrl-v, paste
 EndIf
 
-
+Sleep(2000)
 ;collapse the diffusion toolbox options again
 WinActivate($hWnd)
 Send("!t")     ;Alt-T
+Sleep(1000)
 Send("d")
 
 MouseClick($MOUSE_CLICK_LEFT, $vLocation_X, $mButtonLocation_Bottom["Tractography"])	;click Tractography button
@@ -223,7 +225,9 @@ if ($vFoundWindow) then
    _DebugOut("$vFoundWindow:" & $vFoundWindow)
 
    if ($vFoundWindow) then
+	  Sleep(2000)
 	  Send("!f")  ; Alt-F
+	  Sleep(500)
 	  Send("{DOWN 4}")   ;down arrow 4 times
 	  Send("{RIGHT}")    ;right arrow
 	  Send("{DOWN}")   ;down arrow
@@ -231,7 +235,11 @@ if ($vFoundWindow) then
 	  WinWaitActive("Save Fibertrack Set")
 	  ClipPut("fibertracks_filtered_50mm.dft")
 	  Send("^v") ;Ctrl-v, paste
+	  Sleep(500)
+	  Send("{TAB}")  ;to get out of drop down autosuggest, if present
 	  Send("!s")  ; Alt-S
+	  Sleep(800)
+	  Send("y")  ; answer Yes to possible overwrite question
 	  Sleep(3000)
    EndIf
 
