@@ -6,16 +6,19 @@
 ; param 1: complete path to Brainsuite executable (your param will be enclosed in double quotes). Example: c:\Program Files\BrainSuite18a\bin\BrainSuite18a.exe
 ; param 2: working directory to switch to before opening BrainSuite.  Typically should specify the main BrainSuite data folder. Example: D:\MRI Processing\MRI Data\Post-hypoxic dopamine R21\PH005\Brainsuite
 ; param 3: path BST file to load, relative to working directory.  Example:  .\dti\153_b_mprage_3.FRACT.T1_coord.bst
+; param 4: filtering lenght, mm
 ;
 
 ;Example of complete command line to launch:
-; "C:\Program Files (x86)\AutoIt3\AutoIt3.exe" "N:\MRI Processing\MRI Processing Software\Tools\ComputeTractography.au3" "c:\Program Files\BrainSuite18a\bin\BrainSuite18a.exe"  "N:\MRI Processing\MRI Data\Post-hypoxic dopamine R21\PH005\Brainsuite" ".\dti\153_b_mprage_3.FRACT.T1_coord.bst"
+; "C:\Program Files (x86)\AutoIt3\AutoIt3.exe" "N:\MRI Processing\MRI Processing Software\Tools\ComputeTractography.au3" "c:\Program Files\BrainSuite18a\bin\BrainSuite18a.exe"  "N:\MRI Processing\MRI Data\Post-hypoxic dopamine R21\PH005\Brainsuite" ".\dti\153_b_mprage_3.FRACT.T1_coord.bst" 50
 
 
 ;Test command line
-; "C:\Program Files (x86)\AutoIt3\Beta\AutoIt3.exe" "D:\MRI Processing\MRI Processing Software\Tools\ComputeTractography.au3" "c:\Program Files\BrainSuite18a\bin\BrainSuite18a.exe"   "D:\MRI Processing\MRI Data\WPAFB HyperO2\CW002\Brainsuite" "101_b_mprage_2.FRACT.T1_coord.bst"
+; "C:\Program Files (x86)\AutoIt3\Beta\AutoIt3.exe" "D:\MRI Processing\MRI Processing Software\Tools\ComputeTractography.au3" "c:\Program Files\BrainSuite18a\bin\BrainSuite18a.exe"   "D:\MRI Processing\MRI Data\WPAFB HyperO2\CW002\Brainsuite" "101_b_mprage_2.FRACT.T1_coord.bst" 50
 
-_DebugSetup("Check ComputeTractography", True) ; start displaying debug environment
+
+;For debugging output window, uncomment the following line
+; _DebugSetup("Check ComputeTractography", True) ; start displaying debug environment
 
 
 AutoItSetOption("MustDeclareVars", 1)
@@ -30,6 +33,7 @@ AutoItSetOption("MouseClickDelay",100) ;100 msec delay between mouse clicks
 Local $vBS_Exe = $CmdLine[1]
 Local $vWorkingDir = $CmdLine[2]
 Local $vBST_Path = $CmdLine[3]
+Local $vFilteringLength_mm =  $CmdLine[4]
 
 Local $vCommandString =  '"$vBS_Exe$" "$vBST_Path$"'
 
@@ -139,7 +143,7 @@ Local $vCountWhiteArea = 0, $vInWhiteArea = False, $vFoundTarget = False
 Do
    $vLocation_Y = $vLocation_Y - ($vInWhiteArea ? 15 : 5 ) ; when in the big white areas, we can step large, looking for the border of the white area
 
-   _DebugOut("at $vLocation_Y=" & $vLocation_Y & " pixel color:" & PixelGetColor($vLocation_X , $vLocation_Y) & "; $vInWhiteArea=" & $vInWhiteArea)
+ ;  _DebugOut("at $vLocation_Y=" & $vLocation_Y & " pixel color:" & PixelGetColor($vLocation_X , $vLocation_Y) & "; $vInWhiteArea=" & $vInWhiteArea)
    if ($vInWhiteArea) then
 	  $vInWhiteArea = (PixelGetColor($vLocation_X , $vLocation_Y)<>0xF0F0F0)
 
@@ -160,7 +164,7 @@ Do
 Until ($vFoundTarget) or ($vLocation_Y < 20)
 
 If $vFoundTarget then
-   ClipPut("50")  ;put 50 on clipboard
+   ClipPut($vFilteringLength_mm)  ;put the filtering length on clipboard
    MouseClick($MOUSE_CLICK_LEFT, $vLocation_X, $vLocation_Y) ;filtering length
    Send("^a") ;Ctrl-a, select all the text
    Send("^v") ;Ctrl-v, paste
@@ -194,8 +198,21 @@ if ($vFoundButtons) then
    MouseClick($MOUSE_CLICK_LEFT, $vLocation_X, $vLocation_Y)	; click "Compute Tracks" button
 endif
 
+AutoItSetOption("MouseCoordMode",1)  ;change to screen coordinates , to avoid problem of coord system changing when the processing window pops up to front!
+Local $aDesktopSize = WinGetClientSize("Program Manager")
+
+Local $vDesktopCenter_X =  $aDesktopSize[0]/2
+Local $vDesktopCenter_Y =  $aDesktopSize[1]/2
+ _DebugOut("$vDesktopCenter_X=" & $vDesktopCenter_X)
+ _DebugOut("$vDesktopCenter_Y=" & $vDesktopCenter_Y)
+
 Sleep(2000)
-MouseClick($MOUSE_CLICK_LEFT, $aClientSize[0]/2, $aClientSize[1]/2)  ;click in middle of screen
+MouseMove($vDesktopCenter_X, $vDesktopCenter_Y)
+
+Local $aMousePos = MouseGetPos()
+
+ _DebugOut("aMousePos[0]=" &  $aMousePos[0])
+ _DebugOut("aMousePos[1]=" &  $aMousePos[1])
 
 Local $vWindowTitle , $vWindowTitleToWaitFor, $vFoundWindow, $vWindowWaitTimeout_ms
 $vWindowTitleToWaitFor = "Fiber Tracking"
@@ -204,7 +221,8 @@ $vWindowWaitTimeout_ms = 300000
 $hTimer = TimerInit()
 _DebugOut("$vWindowTitleToWaitFor:" & $vWindowTitleToWaitFor)
 Do
-   Sleep(500)
+   MouseClick($MOUSE_CLICK_LEFT,$vDesktopCenter_X, $vDesktopCenter_Y)  ;click in middle of screen
+   Sleep(1000)
    $vWindowTitle = WinGetTitle("[ACTIVE]")
    $vFoundWindow = ($vWindowTitle = $vWindowTitleToWaitFor)
 Until  $vFoundWindow or (TimerDiff($hTimer) > $vWindowWaitTimeout_ms)
@@ -217,8 +235,11 @@ if ($vFoundWindow) then
    $vWindowWaitTimeout_ms = 600000
    $hTimer = TimerInit()
    _DebugOut("$vWindowTitleToWaitFor:" & $vWindowTitleToWaitFor)
+   MouseMove($vDesktopCenter_X, $vDesktopCenter_Y)
+
    Do
-	  Sleep(500)
+	  MouseClick($MOUSE_CLICK_LEFT,$vDesktopCenter_X, $vDesktopCenter_Y)  ;click in middle of screen
+	  Sleep(1000)
 	  $vWindowTitle = WinGetTitle("[ACTIVE]")
 	  $vFoundWindow = ($vWindowTitle = $vWindowTitleToWaitFor)
    Until  $vFoundWindow or (TimerDiff($hTimer) > $vWindowWaitTimeout_ms)
@@ -233,7 +254,7 @@ if ($vFoundWindow) then
 	  Send("{DOWN}")   ;down arrow
 	  Send("{ENTER}")
 	  WinWaitActive("Save Fibertrack Set")
-	  ClipPut("fibertracks_filtered_50mm.dft")
+	  ClipPut("fibertracks_filtered_"  & $vFilteringLength_mm  & "mm.dft")
 	  Send("^v") ;Ctrl-v, paste
 	  Sleep(500)
 	  Send("{TAB}")  ;to get out of drop down autosuggest, if present
@@ -244,6 +265,10 @@ if ($vFoundWindow) then
    EndIf
 
 EndIf
+
+;Exit the program
+Send("!f")  ; Alt-F
+Send("e")  ; e to Exit
 
 
 #comments-start
