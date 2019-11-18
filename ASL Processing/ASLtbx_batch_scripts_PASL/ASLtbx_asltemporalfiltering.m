@@ -15,7 +15,36 @@ if isempty(P), fprintf(fidLog, 'Input images don''t exist!\n'); return; end;
 % getting the motion correction results. Assuming it is located in the same folder as the images
  movefil = spm_select('FPList', pth, ['^oe_rp_.*\w*.*\.txt$']);
  moves = spm_load(movefil);
- moves = moves(:,7:12);
+ if (size(moves,2)>6)  %This condition added by TF 12 Nov 2019.  In original ASLtbx
+     %code, the file 'rp_PASL.txt' was produced by the code in
+     %'spm_realiang_asl.m', which was Ze Wang re-write of the original
+     %spm_realign.  The spm_realign normally produces a text file
+     %'rp_*.txt' which records the 6-axis movement required for realignment
+     %of each image.  In Ze Wang's re-write of that code, he still outputs
+     %the same as the original spm_realign; but he also outputs another 6
+     %columns.   His idea in his 'spm_realign_asl' code was to move the
+     %images in pairs -- so, after the basic spm_realign algorithm, he
+     %looked at the average of all movements; then he subtracted that
+     %movement from all the 'label' images, and added something to the
+     %'control' images... honestly, I don't really comprehend what we is
+     %doing, but it is something related to treating the label and control
+     %images as two groups.  Anyway, with our new
+     %'CWRU_batch_realing_unwarp'  I am not doing any of that
+     %monkey business -- whatever 'spm_realign' did was OK for me.  
+     
+     %So, if the file has only 6 columns, just use as it is; if it has 12
+     %columns (actually, if more than 6), use columns 7-12 as the
+     %movements.
+     %In the end, I am wondering if this is even valid anymore, since my
+     %'CWRU_batch_realing_unwarp' code is doing spm_realign and then also
+     %doing an "unwarp".  So the total movement is different than in the
+     %simple realign resolts.  But I don't understand this temporal
+     %filtering code well enough to comprehend how I ought to use the
+     %results of the unwarp here... so just go head with the use of the
+     %rigid realign results.  TF 12 Nov 2019
+     
+     moves = moves(:,7:12);
+ end
  % reading data
  v=spm_vol(P);
  dat=spm_read_vols(v);

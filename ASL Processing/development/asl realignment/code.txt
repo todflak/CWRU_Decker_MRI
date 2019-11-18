@@ -1,0 +1,62 @@
+    %Now fix up the rp_PASL.txt file!
+     %In original ASLtbxcode, the file 'rp_PASL.txt' was produced by the code in
+     %'spm_realiang_asl.m', which was Ze Wang's re-write of the original
+     %spm_realign.  The spm_realign normally produces a text file
+     %'rp_*.txt' which records the 6-axis movement required for realignment
+     %of each image.  In Ze Wang's re-write of that code, he still outputs
+     %the same as the original spm_realign; but he also outputs another 6
+     %columns.  Those next six columns seems to be the movements MINUS the
+     %average movement for all of the labeled or all of the control images
+     %in the series.  I guest this is part of his modification to "remove 
+     %   the artifical motion component caused by the systematical label/control 
+     % signal modulations in arterial spin labeled perfusion MRI.".  I am not 
+     % 100% understanding his code, but that is the gist of it.  He later
+     % uses those columns in the ASLtbx_asltemporalfiltering function
+     % (which I also don't completely understand).  In an effort to
+     % reproduce his revised rp_*.txt file, I will add in the columns that
+     % he produced.  But there is some question in my mind about this whole
+     % approach, since I am now doing more than rigid-body transformations,
+     % (using the "unwarp" functionality), so I don't know if this is
+     % actually a valid way to do this!  I will try it anyway!  TF 12 Nov
+     % 2019
+     
+        [pth,nam,ext,num] = spm_fileparts(Ptmp(1,:));
+        movefil = spm_select('FPList', pth, ['^rp_.*\w*.*\.txt$']);
+        moves = spm_load(movefil);
+        if (size(moves,2)~=6)
+            ME = MException('CWRU_batch_realign_unwarp:bad_size', ...
+                'Expected 6 columns, found %d, in file %s ',size(moves,2),movefil);
+            throw(ME);         
+        end
+        n = length(Ptmp);
+        ref=-ones(n,1);           %% ZW  should be switched later to allow different label control order, now assume first image is label
+        ref(2:2:end)=1;
+        %if(ctrfirst) ref=-ref; end;
+        
+        cleanandsave_parameters(moves,ref, movefil);
+		
+		
+		
+		
+		
+		
+		
+
+function Vo=cleanandsave_parameters(Q,ref, fname)
+%This code modified from 'spm_realign_asl.m' 
+   % n = size(Q,1);
+    clQ=Q;
+    for j=1:6
+        refval=clQ(:,j);
+        clQ(:,j)=refval-ref/(ref'*ref)*ref'*refval;
+        clQ(:,j)=clQ(:,j)-clQ(1,j);
+    end
+%     for j=1:n,
+%         nmat = spm_matrix(clQ(j,:));
+%         Vo(j).mat=nmat*V(1).mat;
+%     end
+    Q=cat(2,Q,clQ);
+    save(fname,'Q','-ascii');
+    return;
+end   		
+		

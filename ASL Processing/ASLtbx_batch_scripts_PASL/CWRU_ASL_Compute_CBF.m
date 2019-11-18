@@ -86,8 +86,8 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
       switch SpecificStepToRun
          case {'All', 'Basic', 'All_SimpleCBF', 'Basic_TPM', 'Basic_NoSmoothing'}
             %motion correction-- realign the functional images to the first functional image of each subject
-            batch_realign; 
-            CWRU_RejectOutlierImages(PAR,fidLog, ImageOutlierFiler_MADThreshold, true)
+            CWRU_batch_realign_unwarp;   %TF 11 Nov 2019; was batch_realign; 
+            CWRU_RejectOutlierImages(PAR,fidLog, ImageOutlierFiler_MADThreshold, true, 0.3);
             
             % register M0 to the mean BOLD generated during motion correction for the raw ASL images
             batch_coreg_M0; 
@@ -112,7 +112,7 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
             end
             
          case 'realign'
-            batch_realign; 
+            CWRU_batch_realign_unwarp;  %TF 11 Nov 2019; was batch_realign; 
             CWRU_RejectOutlierImages(PAR,fidLog, ImageOutlierFiler_MADThreshold, true)
 
             

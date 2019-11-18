@@ -1,7 +1,7 @@
-%CWRU_RejectOutlierImages(PAR, fidLog, Filter_MADThreshold, RemoveFirstPair)
+%CWRU_RejectOutlierImages(PAR, fidLog, Filter_MADThreshold, RemoveFirstPair, PairwiseMotionCorrectLimit)
 %Tod Flak 05 June 2018
 %
-%Looks for images in the ASL sequence that are vrery different than the
+%Looks for images in the ASL sequence that are very different than the
 %mean ASL, and removes them from the rPASL.nii
 %
 % Assumes there is existing files: rPASL.nii (realigned PASL images) (or
@@ -18,7 +18,21 @@
 % Recreate the original file, omitting the image pairs that are outliers
 % Record into the log file the list of image numbers that were excluded
 
-function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, RemoveFirstPair)
+% TF 13 Nov 2019: Added option to also exclude image pairs based upon the
+% differential motion of the images in each pair.  The idea here is that we
+% are really most interesting in avoiding image pairs where they were far
+% apart in the original uncorrected data.  Even if the images both got
+% motion-corrected to be well super-imposed, the problem can be that they 
+% experienced different distortions.  To evaluate this, compare the
+% motion correction that was performed on the images BY PAIR -- if the
+% motion correction is very different between the two images of the pair,
+% reject that pair.  This option is controlled by parameter
+% 'PairwiseMotionCorrectLimit' -- omit or set to 0 will skip this test; a
+% positive value will reject the pair if the relative motion correction is
+% above this limit.  Note that the angular motion correction values are
+% converted to distance considering a radius of 0.4 of the image size.
+
+function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, RemoveFirstPair, PairwiseMotionCorrectLimit)
     if (exist('fidLog','var')==0) || (isempty(fidLog))
         fidLog = 1;
     end
@@ -28,7 +42,10 @@ function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, R
     if (exist('RemoveFirstPair','var')==0) || (isempty(RemoveFirstPair))
         RemoveFirstPair = true;
     end
-
+    if (exist('PairwiseMotionCorrectLimit','var')==0) || (isempty(PairwiseMotionCorrectLimit))
+        PairwiseMotionCorrectLimit = 0;
+    end
+    
     if (fidLog<=0), fidLog=1; end  %if fidLog is not previously defined, set to 1 to send output to screen
     fprintf(fidLog,'\n%s: Remove outlier images, ImageOutlierFiler_MADThreshold=%f, RemoveFirstPair=%i\n', datestr(datetime('now')), ImageOutlierFiler_MADThreshold,RemoveFirstPair );
 
@@ -64,6 +81,8 @@ function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, R
             %   ([RMS delta] - Median([RMS delta])) / MedianAbsoluteDeviation([RMS delta])
             mad_fold = zeros(series_count,1);
             exclude_img = false(series_count,1);
+            exclude_img_byMAD = false(series_count,1);
+            exclude_img_byPairwiseMotionCorrectLimit = false(series_count,1);
             mad_all = mad(rms_delta,1); %compute the median absolute deviation of all rms_deltas
             median_rms_delta = median(rms_delta);
             for i=1:series_count
@@ -71,6 +90,9 @@ function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, R
                 % Determine which images have MAD-fold that is above Filter_MADThreshold
                 if (ImageOutlierFiler_MADThreshold>0) 
                     exclude_img(i) = (mad_fold(i)>=ImageOutlierFiler_MADThreshold);
+                    if  exclude_img(i)
+                        exclude_img_byMAD(i) = true;
+                    end
                 end
             end
 
@@ -89,14 +111,87 @@ function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, R
                 exclude_img(2) = true;
             end
 
+            %this added 13 Nov 2019, TF 
+            if (PairwiseMotionCorrectLimit>0)
+                % getting the motion correction results. Assuming it is located in the same folder as the images
+                movefil = spm_select('FPList', dir, ['^rp_.*\w*.*\.txt$']);
+                moves = spm_load(movefil);
+                if (size(moves,2)>6)  %for explanation about this condition,
+                    %see note in ASLtbx_asltemporalfiltering.m
+                    moves = moves(:,7:12);
+                end
+                %Now moves has the realignment info for each image in the
+                %series; column 1,2,3 are the X,Y,Z moveements; and
+                %columns 4,5,6 are the pitch, roll, yaw (I am not
+                %absolutely certain about that order, but I've seen it
+                %written in that order on some tutorial web pages) -- so
+                %they would be rotations around the X, Y, and Z axes
+                %respectively.
+               
+                %To make estimates of effects of angular rotations around the 
+                % origin, presume that the origin is basically in the
+                % center of the brain (more or less true).  Imagine a point 
+                % that is 40% of the image size away from the center in each 
+                % dimension.  So, for an ASL image that has voxel size of 
+                % [3.475, 3.475, 10]mm and image dimensions of [64,64,27],
+                % the point we would think about would be at voxel location
+                % V= 0.4 * [32, 32, 13.5]; or at physical location of 
+                % P = V .* [3.475, 3.475, 10]mm = [88.0000   88.0000   54.0000] 
+               
+                % So, get image sizes
+                [header, ext, filetype, machine] = load_untouch_header_only(input_file);
+                    %header.dime.pixdim : [-1, 3.475, 3.475, 5, 0, 0 ,..]
+                    %header.dime.dim: [4,64,64,27,90,1,1,1]
+                test_point =  [(header.dime.dim(2:4)*0.4).* header.dime.pixdim(2:4) 1];
+                %Note --add a 1 as fourth element to allow translations
+                
+                %Now for each image, apply the transformations to that
+                %testpoint
+                N_img = header.dime.dim(5);
+                test_point_moved = zeros(N_img, 4);
+                for i=1:N_img
+                    q= quaternion.eulerangles('xyz',deg2rad(moves(i,4:6)));
+                    M = zeros(4,4);  %create an 3D affine transformation matrix
+                    M(1:3,1:3) = q.RotationMatrix;  %upper left 3x3 is rotation matrix
+                    M(4,1:3) = moves(i,1:3); %row 4 is for translations
+                    M(4,4) = 1;
+                    test_point_moved(i,:) = test_point * M;
+                end
+                
+                %now compute the distance between the test points for each
+                %image pair; if greater than threshold, mark pair for
+                %exclusion
+                d_e = zeros(N_img/2,2);
+                for ip=1:(N_img/2)
+                    i = (ip-1)*2+1;
+                    distance = norm(test_point_moved(i,1:3) - test_point_moved(i+1,1:3));
+                    d_e(ip,1)=distance;
+                    if (distance>PairwiseMotionCorrectLimit)
+                        d_e(ip,2)=1;
+                        exclude_img(i) = true;
+                        exclude_img(i+1) = true;
+                        exclude_img_byPairwiseMotionCorrectLimit(i) = true;
+                        exclude_img_byPairwiseMotionCorrectLimit(i+1) = true;
+                    end
+                end
+            end
+            
             include_img = ~exclude_img;
             count_included = size(include_img(include_img==true),1);
 
             %create a list of the images to include
             strImagesIdxExcluded = '';
+            strImagesIdxExcluded_byMAD = '';            
+            strImagesIdxExcluded_byPairwiseMotionCorrectLimit = '';
             for i=1:series_count        
                 if exclude_img(i)
                     strImagesIdxExcluded = [strImagesIdxExcluded ',' sprintf('%i',i)]; %#ok<AGROW>
+                end
+                if exclude_img_byMAD(i)
+                    strImagesIdxExcluded_byMAD = [strImagesIdxExcluded_byMAD ',' sprintf('%i',i)]; %#ok<AGROW>
+                end
+                if exclude_img_byPairwiseMotionCorrectLimit(i)
+                    strImagesIdxExcluded_byPairwiseMotionCorrectLimit = [strImagesIdxExcluded_byPairwiseMotionCorrectLimit ',' sprintf('%i',i)]; %#ok<AGROW>
                 end
             end
             
@@ -120,6 +215,8 @@ function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, R
             
             
             fprintf(fidLog,'   Outlier images excluded: %s\n', strImagesIdxExcluded(2:end));
+            fprintf(fidLog,'   Outlier images excluded by MAD filter: %s\n', strImagesIdxExcluded_byMAD(2:end));
+            fprintf(fidLog,'   Outlier images excluded by PairwiseMotionCorrectLimit: %s\n', strImagesIdxExcluded_byPairwiseMotionCorrectLimit(2:end));
             fprintf(fidLog,'   Count image pairs remaining: %i\n',count_included /2);
             fprintf(fidLog,'   Outlier-excluded ASL sequence file created: %s\n', output_file);
         end
