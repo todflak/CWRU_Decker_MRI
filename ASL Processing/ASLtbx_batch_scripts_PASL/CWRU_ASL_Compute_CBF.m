@@ -125,7 +125,7 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
          case 'filtering'
             batch_filtering; 
             
-         case 'smooth'
+         case {'smooth', 'smooth_NoSmoothing'}
             batch_smooth(PAR, fidLog, DoSmoothing); 
          
          case 'perf_subtract_simple'    
