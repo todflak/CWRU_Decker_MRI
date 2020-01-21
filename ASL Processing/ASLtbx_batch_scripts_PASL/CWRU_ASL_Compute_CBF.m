@@ -96,6 +96,9 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
             batch_coreg; 
 
             %filter and smooth the coreged functional images
+            batch_brainmask; 
+
+            %filter and smooth the coreged functional images
             batch_filtering; 
 			
             batch_smooth(PAR, fidLog, DoSmoothing)
@@ -114,7 +117,6 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
          case 'realign'
             CWRU_batch_realign_unwarp;  %TF 11 Nov 2019; was batch_realign; 
             CWRU_RejectOutlierImages(PAR,fidLog, ImageOutlierFiler_MADThreshold, true)
-
             
          case 'coreg_M0'
             batch_coreg_M0; 
@@ -122,6 +124,9 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
          case 'coreg'
             batch_coreg; 
             
+		 case 'brainmask'
+			batch_brainmask;
+		 
          case 'filtering'
             batch_filtering; 
             

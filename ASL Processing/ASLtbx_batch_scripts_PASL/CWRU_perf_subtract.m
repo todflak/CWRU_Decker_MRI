@@ -782,7 +782,7 @@ end
 
 fprintf(fidLog, 'CWRU_perf_subtract parameter summary: \n');
 fprintf(fidLog, 'Filename(1)=%s\n', Filename(1,:));
-fprintf(fidLog, 'Count images=%i\n', size(Filename,1));
+fprintf(fidLog, 'Count images=%d\n', size(Filename,1));
 fprintf(fidLog, 'maskimg=%s\n', maskimg);
 fprintf(fidLog, 'M0img=%s\n', M0img);
 fprintf(fidLog, 'Foldername_TPMs=%s\n', Foldername_TPMs);
