@@ -119,6 +119,14 @@ function CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, SegmentByT
          Labeling_Efficiency = PAR.ASL_Quant_Params(5);
          SubtractionOrder    = PAR.ASL_Quant_Params(6);
 
+         %now supporting the option to extend the ASL_Quant_Params vector
+         %to specify post-label delays that are specific for each ASL
+         %iteration.  When doing this, the value in ASL_Quant_Params(2) is
+         %overwritten by these values.  TF 15 June 2020
+         if (size(PAR.ASL_Quant_Params,2) >= (6+c)) 
+            Delaytime_ms = PAR.ASL_Quant_Params(6+c);
+         end
+         
       %   ASL_Type = 0; % NOW SET AS A FUNCTION PARAMETER % 0==PASL, 1==pCASL
          MaskFlag    = 1;
          MeanFlag    = 1;

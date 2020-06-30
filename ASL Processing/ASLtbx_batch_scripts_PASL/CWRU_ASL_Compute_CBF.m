@@ -88,6 +88,7 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
             %motion correction-- realign the functional images to the first functional image of each subject
             CWRU_batch_realign_unwarp;   %TF 11 Nov 2019; was batch_realign; 
             CWRU_RejectOutlierImages(PAR,fidLog, ImageOutlierFiler_MADThreshold, true, 0.3);
+%            CWRU_RejectOutlierImages(PAR,fidLog, 100, false, 100);  %this put in 29Jun2020 solely for pCASL to avoid removing any images
             
             % register M0 to the mean BOLD generated during motion correction for the raw ASL images
             batch_coreg_M0; 
@@ -124,9 +125,9 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
          case 'coreg'
             batch_coreg; 
             
-		 case 'brainmask'
-			batch_brainmask;
-		 
+         case 'brainmask'
+           batch_brainmask;
+
          case 'filtering'
             batch_filtering; 
             
