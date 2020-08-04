@@ -2,7 +2,7 @@
 % Created by Ze Wang, 08-05-2004
 % zewang@mail.med.upenn.edu
 
-function P = par(Data_Root, Study_Folders_ToProcess )
+function P = par(Data_Root, Study_Folders_ToProcess, ASL_Type)
    global PAR fidLog;
    if (exist('fidLog','var')==0) || isempty(fidLog)
       fidLog=1; %by default, output to screen
@@ -22,6 +22,8 @@ function P = par(Data_Root, Study_Folders_ToProcess )
    PAR.SPM_path=spm('Dir');
    addpath(PAR.SPM_path);
 
+   PAR.ASL_Type = ASL_Type;
+   
    % This file sets up various things specific to this
    % analysis, and stores them in the global variable PAR,
    % which is used by the other batch files.
@@ -50,7 +52,19 @@ function P = par(Data_Root, Study_Folders_ToProcess )
 
    PAR.root=Data_Root;
    PAR.datasubfolder = 'ASL';
-
+   
+   
+   switch (PAR.ASL_Type)   %In the past, all images were referred to as 
+      % 'PASL', which I didn't like once we started processing pCASL images.
+      % I had added this code because I was considering changing the image
+      % name based on the ASL_Type, to either 'PASL' or 'pCASL'.  But later 
+      % I decided to simply call everything 'ASL'.  TF 03 Aug 2020
+      case 0
+         ASL_ImageTypeName = 'ASL'; 
+      case 1
+         ASL_ImageTypeName = 'ASL'; 
+   end
+   
    % Get subjects' directories
    % User
    if exist('Study_Folders_ToProcess','var') && (~isempty(Study_Folders_ToProcess))
@@ -142,7 +156,7 @@ function P = par(Data_Root, Study_Folders_ToProcess )
                condition_index = condition_index+1;
                if (sb==1) %for first subject, set the values in the PAR arrays
                   PAR.sessionfilters{condition_index} = dirlisting(i).name;
-                  PAR.confilters{condition_index} = 'PASL'; %filters for finding the ASL images
+                  PAR.confilters{condition_index} = ASL_ImageTypeName;   %filters for finding the ASL images
                   PAR.M0filters{condition_index} = 'M0'; %filters for finding the M0 images
                else  %for additional subjects, just confirm that the folders match
                   if (condition_index>size(PAR.sessionfilters))

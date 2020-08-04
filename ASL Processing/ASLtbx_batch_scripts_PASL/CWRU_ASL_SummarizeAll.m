@@ -104,8 +104,8 @@ function CWRU_ASL_SummarizeAll(Data_Root, Study_Folders_ToProcess, LabelDescript
          filename_SVRegLabels = fullfile(bs_folder, tmp(1).name);
 
          %for the ASL data, get ready to transform the files.
-         %  ASL_FileToProcess_Filter = {'meanCBF_*rPASL.nii'; 'meanPERF_*rPASL.nii'};
-         ASL_FileToProcess_Filter = {'meanCBF_0_sASLflt_oe_rPASL.nii'};   % changed by TF 07 June 2018, to avoid getting incorrect files.
+         %  ASL_FileToProcess_Filter = {'meanCBF_*rASL.nii'; 'meanPERF_*rASL.nii'};
+         ASL_FileToProcess_Filter = {'meanCBF_0_sASLflt_oe_rASL.nii'};   % changed by TF 07 June 2018, to avoid getting incorrect files.
 		 
          for c=1:PAR.ncond
             str   = sprintf('-- processing subject/condition: #%d/%d  (''%s''/''%s'')',s, c,PAR.subjects{s},PAR.sessionfilters{c} );

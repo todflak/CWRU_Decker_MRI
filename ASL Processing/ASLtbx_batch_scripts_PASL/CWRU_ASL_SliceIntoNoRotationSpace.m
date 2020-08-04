@@ -59,8 +59,8 @@ function CWRU_ASL_SliceIntoNoRotationSpace(par, remove_intermediate_files)
       end
       
       %for the ASL data, get ready to transform the files.
-    %  ASL_FileToProcess_Filter = {'meanCBF_*rPASL.nii'; 'meanPERF_*rPASL.nii'; 'brainmask.nii'};
-      ASL_FileToProcess_Filter = {'meanCBF_0_sASLflt_oe_rPASL.nii'; 'brainmask.nii'};  %changed by TF 07 June 2018.  Now using '_oe_' version (outlier-excluded); and decided it was not necessary to do teh Perfusion image
+    %  ASL_FileToProcess_Filter = {'meanCBF_*rASL.nii'; 'meanPERF_*rASL.nii'; 'brainmask.nii'};
+      ASL_FileToProcess_Filter = {'meanCBF_0_sASLflt_oe_rASL.nii'; 'brainmask.nii'};  %changed by TF 07 June 2018.  Now using '_oe_' version (outlier-excluded); and decided it was not necessary to do teh Perfusion image
           
       for c=1:par.ncond
 

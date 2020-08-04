@@ -31,7 +31,7 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
    % first convert DICOM into nifti
    % ASLtbx_dicomconvert;
    % ASLtbx_3Dto4D;
-   %example code for processing PASL data
+
    clear global PAR
    clear global fidLog
    
@@ -69,7 +69,7 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
       fprintf(fidLog,'Study_Folders_ToProcess:\n%s\n', char(Study_Folders_ToProcess));
       
       %set the parameters
-      par(Data_Root, Study_Folders_ToProcess);
+      par(Data_Root, Study_Folders_ToProcess, ASL_Type);
 
          PAR.ASL_Quant_Params = ASL_Quant_Params;
       if (exist('ASL_Quant_Params','var')==0) || (isempty(ASL_Quant_Params))
@@ -77,43 +77,62 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
       else
       end
      
-	  DoSmoothing = isempty(strfind(lower(SpecificStepToRun),'nosmoothing'));
-      
+	   DoSmoothing = ~contains(lower(SpecificStepToRun),'nosmoothing');
+      UseTPM_ForBrainMask = contains(lower(SpecificStepToRun),'tpmbrainmask');
+     
+      switch (ASL_Type)
+         case 0 %PASL, use meanASL as alignment source
+            coreg_source_regex = ['^mean' PAR.confilters{1} '\w*\.nii$'];
+         case 1 %pCASL, use rM0 as alignment source
+            coreg_source_regex = ['^r' PAR.M0filters{1}  '\w*\.nii$'];
+      end
+            
       % set the center to the center of each images
       % batch_reset_orientation;
 
       
+      RejectOutlier_ExcludeFirstPair = true;
+      RejectOutlier_PairwiseMotionCorrectLimit = 0.3;
+      if (ASL_Type==1)  %for pCASL, do not remove first pair, because there are many fewer image pairs
+         RejectOutlier_ExcludeFirstPair = false;
+      end
+      
+      
       switch SpecificStepToRun
-         case {'All', 'Basic', 'All_SimpleCBF', 'Basic_TPM', 'Basic_NoSmoothing'}
+        % case {'All', 'Basic', 'All_SimpleCBF', 'Basic_TPM', 'Basic_NoSmoothing'}
+         case {'Basic',  'Basic_NoSmoothing', 'Basic_TPMBrainMask','Basic_NoSmoothing_TPMBrainMask'}
             %motion correction-- realign the functional images to the first functional image of each subject
             CWRU_batch_realign_unwarp;   %TF 11 Nov 2019; was batch_realign; 
-            CWRU_RejectOutlierImages(PAR,fidLog, ImageOutlierFiler_MADThreshold, true, 0.3);
-%            CWRU_RejectOutlierImages(PAR,fidLog, 100, false, 100);  %this put in 29Jun2020 solely for pCASL to avoid removing any images
+            CWRU_RejectOutlierImages(PAR,fidLog, ImageOutlierFiler_MADThreshold, RejectOutlier_ExcludeFirstPair, RejectOutlier_PairwiseMotionCorrectLimit);
             
             % register M0 to the mean BOLD generated during motion correction for the raw ASL images
             batch_coreg_M0; 
 
             %coreg the functional images to the anatomical image
-            batch_coreg; 
+            batch_coreg(coreg_source_regex); 
 
-            %filter and smooth the coreged functional images
-            batch_brainmask; 
+            %create brainmask image
+            batch_brainmask(UseTPM_ForBrainMask); 
 
             %filter and smooth the coreged functional images
             batch_filtering; 
 			
             batch_smooth(PAR, fidLog, DoSmoothing)
-            
-            if strcmp(SpecificStepToRun,'All')
-               CWRU_ASL_ComputeTPMs(Data_Root, Study_Folders_ToProcess);
-               CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, true, ASL_Type, PrecomputedCBF_Scaling);    
-
-            elseif   strcmp(SpecificStepToRun,'All_SimpleCBF')
-               CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, false, ASL_Type, PrecomputedCBF_Scaling);   
-
-            elseif   strcmp(SpecificStepToRun,'Basic_TPM')
-              CWRU_ASL_ComputeTPMs(Data_Root, Study_Folders_ToProcess);
-            end
+        
+% I've decided to remove these options, because it was becoming too
+% difficult to maintain the flexibility I wanted.  Now the calling program
+% is expected to explicitly invoke the TPM computation and CBF computations
+% as is desired.  TF 03 Aug 2020
+%             if strcmp(SpecificStepToRun,'All')
+%                CWRU_ASL_ComputeTPMs(Data_Root, Study_Folders_ToProcess);
+%                CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, true, ASL_Type, PrecomputedCBF_Scaling);    
+% 
+%             elseif   strcmp(SpecificStepToRun,'All_SimpleCBF')
+%                CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, false, ASL_Type, PrecomputedCBF_Scaling);   
+% 
+%             elseif   strcmp(SpecificStepToRun,'Basic_TPM')
+%               CWRU_ASL_ComputeTPMs(Data_Root, Study_Folders_ToProcess);
+%             end
             
          case 'realign'
             CWRU_batch_realign_unwarp;  %TF 11 Nov 2019; was batch_realign; 
@@ -123,10 +142,11 @@ function CWRU_ASL_Compute_CBF(Data_Root, Study_Folders_ToProcess, LogFilename, .
             batch_coreg_M0; 
             
          case 'coreg'
-            batch_coreg; 
+            
+            batch_coreg(coreg_source_regex); 
             
          case 'brainmask'
-           batch_brainmask;
+           batch_brainmask(UseTPM_ForBrainMask);
 
          case 'filtering'
             batch_filtering; 

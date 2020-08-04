@@ -18,7 +18,7 @@ if exist('StructuralImageNameSuffix','var')==0 || isempty(StructuralImageNameSuf
    StructuralImageNameSuffix = '';
 end
 if exist('ImageToSummarizeFilename','var')==0 || isempty(ImageToSummarizeFilename)
-   ImageToSummarizeFilename = 'meanCBF_0_sASLflt_rPASL_resized.nii';
+   ImageToSummarizeFilename = 'meanCBF_0_sASLflt_rASL_resized.nii';
 end
 if exist('MaskForSummarizeFilename','var')==0 || isempty(MaskForSummarizeFilename)
    MaskForSummarizeFilename = 'brainmask_resized.nii';

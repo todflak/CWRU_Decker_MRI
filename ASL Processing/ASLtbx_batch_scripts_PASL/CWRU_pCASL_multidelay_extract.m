@@ -55,7 +55,7 @@ function CWRU_pCASL_multidelay_extract(sourceNii, CountPairs)
          delete(nii_filename_toprocess)
       end
       
-     % fprintf('Produced M0.nii and PASL.nii from input file: "%s"\n', nii_input_filename);
+     % fprintf('Produced M0.nii and ASL.nii from input file: "%s"\n', nii_input_filename);
 
    end
 

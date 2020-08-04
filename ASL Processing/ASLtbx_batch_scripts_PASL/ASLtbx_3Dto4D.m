@@ -9,7 +9,7 @@ dat=spm_read_vols(v);
 v.fname=fullfile(spm_str_manip(imgfiles(1,:), 'h'), 'M0.nii');
 v=spm_write_vol(v, dat);
 v=spm_vol(imgfiles(2:end,:));
-file4Dname=fullfile(spm_str_manip(imgfiles(1,:), 'h'), ['PASL.nii']);
+file4Dname=fullfile(spm_str_manip(imgfiles(1,:), 'h'), ['ASL.nii']);
 spm_file_merge(v,file4Dname,0);
 % delete the original 3D files
 for i=1:size(imgfiles,1)

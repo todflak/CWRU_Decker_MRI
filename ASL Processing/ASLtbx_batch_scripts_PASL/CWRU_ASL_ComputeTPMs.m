@@ -28,7 +28,7 @@ function CWRU_ASL_ComputeTPMs(Data_Root, Study_Folders_ToProcess, LogFilename, .
       StructuralImageNameSuffix = '';
    end
    % if exist('ImageToSummarizeFilename','var')==0 || isempty(ImageToSummarizeFilename)
-   %    ImageToSummarizeFilename = 'meanCBF_0_sASLflt_rPASL.nii';
+   %    ImageToSummarizeFilename = 'meanCBF_0_sASLflt_rASL.nii';
    % end
    % if exist('MaskForSummarizeFilename','var')==0 || isempty(MaskForSummarizeFilename)
    %    MaskForSummarizeFilename = 'brainmask\.nii';

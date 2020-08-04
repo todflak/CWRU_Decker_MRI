@@ -57,7 +57,7 @@ for sb =1:PAR.nsubs % for each subject
       %I am considering moving back to processing all ASL conditions
       %together in one call to the realign & unwarp code, as was done in
       %the original ASLtbx code; but unfortunately I cannot really figure
-      %out the sybtax to pass as the "inputs" variable to make this work.
+      %out the syntax to pass as the "inputs" variable to make this work.
       %You can see the several ways I attempted below.  For now, just go
       %with this way that works for processing one ASL series at a time.
       %In the future, if I really want to do it, I could always create the
@@ -78,17 +78,17 @@ for sb =1:PAR.nsubs % for each subject
         movefil = spm_select('FPList', pth, ['^rp_.*\w*.*\.txt$']);
       
      %the original 'batch_realign' code produced a mean file named
-     %'meanPASL.nii'; but it seems that this realign&unwarp process
-     %produces 'meanrPASL.nii'; so to make this consistent with previous
+     %'meanASL.nii'; but it seems that this realign&unwarp process
+     %produces 'meanrASL.nii'; so to make this consistent with previous
      %version, remove the 'r' from the mean image filename.
  
      meanfile_r =  spm_select('FPList', pth, ['meanr' nam ext]);
      meanfile = fullfile(pth,['mean' nam ext]);
      movefile( meanfile_r, meanfile);
         
-        fprintf(fidLog,'   Produced coregistered PASL series file: %s\n',fullfile(pth,['r' nam ext]) );      
-        fprintf(fidLog,'   From that, produced average PASL file: %s\n', meanfile );      
-        fprintf(fidLog,'   Also saved movement file: %s\n',movefil );      
+     fprintf(fidLog,'   Produced coregistered ASL series file: %s\n',fullfile(pth,['r' nam ext]) );      
+     fprintf(fidLog,'   From that, produced average ASL file: %s\n', meanfile );      
+     fprintf(fidLog,'   Also saved movement file: %s\n',movefil );      
    end
 end
 

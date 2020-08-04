@@ -1,6 +1,6 @@
 % If you have already computed tissue probabiliy maps, you can use this to
 % compute a brain mask file.  This relies on the grey matter and white
-% matter TPMs (c1 and c2); it dilates a little bitand then fills in any
+% matter TPMs (c1 and c2); it dilates a little bit and then fills in any
 % holes (completely enclosed volumes).  There are some hard-coded values,
 % such as the threshold of the probability map, the dilation amount, and
 % the value to produce in the final mask file.  These could be exposed as
@@ -32,6 +32,7 @@ function BrainMask_FromTPMs(TPM_BaseFilename, OutputMaskFileName)
     mask_image = imdilate(mask_image,se);  %do a bit more to fill in remaining internal holes (maybe with small channel to outside)
     mask_image = imfill(mask_image,'holes');
     mask_image = imerode(mask_image,se);
+    mask_image = imerode(mask_image,se);  %erode twice
     mask_image(mask_image>0) = 255;
     
     DoGZip = false;

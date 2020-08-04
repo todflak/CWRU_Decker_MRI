@@ -35,8 +35,8 @@ function batch_smooth(PAR, fidLog, DoSmoothing)
          %P=[];
          %dir_func = fullfile(PAR.root, PAR.subjects{s},PAR.sesses{ses},PAR.condirs{c});
 
-         %TEMPORARY - create a smoothed version of the meanPASL image.  TF 18 Oct 2017
-         P=spm_select('FPList', char(PAR.condirs{s,c}), ['^meanPASL'  '\w*\.nii$']);
+         %TEMPORARY - create a smoothed version of the meanASL image.  TF 18 Oct 2017
+         P=spm_select('FPList', char(PAR.condirs{s,c}), ['^mean' PAR.confilters{c}  '\w*\.nii$']);
          if (DoSmoothing) 
             ASLtbx_smoothing(P, PAR.FWHM);      
          else

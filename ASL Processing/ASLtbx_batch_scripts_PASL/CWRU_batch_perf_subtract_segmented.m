@@ -45,18 +45,18 @@ function CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, SegmentByT
             %this is a special mode to implement the Chris Flask method of computation.
             %If we are on c=1 (first ASL of group), produce a modified maskfile.  This
             % assumes that you have already completed CBF computation using a different 
-            % mode, and that the file 'meanCBF_0_sASLflt_rPASL'
+            % mode, and that the file 'meanCBF_0_sASLflt_rASL'
            if (c==1)
               fprintf(fidLog, 'Will produce filtered brain mask.\n');
               maskimg=spm_select('FPList', PAR.condirs{s,c}, ['^brainmask\.nii']);
-              cbfimg = spm_select('FPList', PAR.condirs{s,c}, ['^meanCBF_0_sASLflt_rPASL\.nii']);
+              cbfimg = spm_select('FPList', PAR.condirs{s,c}, ['^meanCBF_0_sASLflt_rASL\.nii']);
               maskimg_filtered = fullfile( PAR.condirs{s,c}, 'brainmask_filtered.nii');
-              switch OutlierMode
+              switch (OutlierMode)
                 case 9
                   filter_level = 15;
-				case 10
+				    case 10
                   filter_level = 0;
-			  end			  
+			     end			  
               fprintf(fidLog, 'Will produce filtered brain mask, with CBF filter level=%f.\n', filter_level);
               CWRU_ASL_FilterMaskByCBF(maskimg,cbfimg,filter_level,maskimg_filtered, fidLog);
            end
@@ -146,8 +146,8 @@ function CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, SegmentByT
          
          if (OutlierMode<=4)
          elseif (OutlierMode==5)
-            %try a different approach.  Use meanPASL as the M0!
-            M0img =  spm_select('ExtFPList', PAR.condirs{s,c}, '^smeanPASL.*\.nii', 1:1000 );
+            %try a different approach.  Use meanASL as the M0!
+            M0img =  spm_select('ExtFPList', PAR.condirs{s,c}, ['^mean' PAR.confilters{1} '\w*\.nii$'], 1:1000 );
          elseif (OutlierMode==6)
             %try a different approach.  Use constant 1000 for M0 value in denominator of 
             % CBF equation; and also , eliminate the use of qTI.

@@ -2,10 +2,10 @@
 %
 global PAR fidLog;
 if (fidLog<=0), fidLog=1; end  %if fidLog is not previously defined, set to 1 to send output to screen
-fprintf(fidLog,'\n%s: Coregister M0 to meanPASL\n', datestr(datetime('now')));
+fprintf(fidLog,'\n%s: Coregister M0 to meanASL\n', datestr(datetime('now')));
 par;
 
-disp('Coregister M0 to meanPASL for all subjects, it takes a while....');
+disp('Coregister M0 to meanASL for all subjects, it takes a while....');
 global defaults;
 defaults=spm_get_defaults;
 %spm_defaults;

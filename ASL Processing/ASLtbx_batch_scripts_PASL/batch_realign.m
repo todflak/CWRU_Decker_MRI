@@ -69,7 +69,7 @@ for sb =1:PAR.nsubs % for each subject
       % Run reslice
       spm_reslice(P, resFlags);
       [pth,nam,ext,num] = spm_fileparts(P(1,:));
-      fprintf(fidLog,'   Produced coregistered PASL series file: %s\n',fullfile(pth,['r' nam ext]) );      
-      fprintf(fidLog,'   From that, produced average PASL file: %s\n',fullfile(pth,['mean' nam ext]) );      
+      fprintf(fidLog,'   Produced coregistered ASL series file: %s\n',fullfile(pth,['r' nam ext]) );      
+      fprintf(fidLog,'   From that, produced average ASL file: %s\n',fullfile(pth,['mean' nam ext]) );      
    end
 end

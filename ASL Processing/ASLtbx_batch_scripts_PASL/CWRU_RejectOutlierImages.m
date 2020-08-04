@@ -2,12 +2,12 @@
 %Tod Flak 05 June 2018
 %
 %Looks for images in the ASL sequence that are very different than the
-%mean ASL, and removes them from the rPASL.nii
+%mean ASL, and removes them from the rASL.nii
 %
-% Assumes there is existing files: rPASL.nii (realigned PASL images) (or
+% Assumes there is existing files: rASL.nii (realigned ASL images) (or
 % other name, based on PAR selection)
-% Copy the source file to name like rPASL_BeforeOutlierExclusion.nii
-% First computes the mean of all PASL images
+% Copy the source file to name like rASL_BeforeOutlierExclusion.nii
+% First computes the mean of all ASL images
 % For each image, computes the RMS of the delta (voxel_val - mean_voxel_val)
 % Compute the MAD-fold  of RMS_delta from the median RMS_delta:
 %   ([RMS delta] - Median([RMS delta])) / MedianAbsoluteDeviation([RMS delta])
@@ -195,7 +195,7 @@ function CWRU_RejectOutlierImages(PAR, fidLog, ImageOutlierFiler_MADThreshold, R
                 end
             end
             
-            %also we need to edit the 'rp_PASL.txt' to delete the rows that
+            %also we need to edit the 'rp_ASL.txt' to delete the rows that
             %are for the excluded images
             movefil = spm_select('FPList', dir, ['^rp_' PAR.confilters{c} '.txt$']);
             [dir, nam, ext, ~] = spm_fileparts(movefil(1,:));
