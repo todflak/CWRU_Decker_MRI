@@ -241,7 +241,7 @@ function [perfnum,glcbf] = ...
            Labeltime,Delaytime,Slicetime,TE,M0img,M0roi,maskimg, ...
            M0csf, M0wm, threshold, ...
            Foldername_TPMs, OutlierThresholds, ...
-           PrecomputedCBFImage, PrecomputedCBF_Scaling)
+           PrecomputedCBFImage, PrecomputedCBF_Scaling, T1blood)
         
 % close all;
 
@@ -443,7 +443,6 @@ if ~exist('OutlierThresholds','var') || isempty(OutlierThresholds)
    end
 end
 
-
 if ~exist('AslType','var') || isempty(AslType)   
    pos=pos+1;
    AslType = spm_input('Select ASL Type:0 for PASL,1 for CASL', pos, 'e', 1);
@@ -495,6 +494,12 @@ if CBFFlag==1
       T2b=60;
       BloodT1=1810;  % You may need to update this value from the literature.
    end;
+   
+   %check for override of default BloodT1
+   if exist('T1blood','var') && ~isempty(T1blood)   
+       BloodT1 = T1blood;
+   end
+   
    if QuantFlag==1, useM0=1;      % CASLUSEM0VAL PASLUSEM0VAL
    else  % mapwise M0 or M0ctr calibration
       if exist('M0img','var')==0   % M0 image has not been provided
@@ -789,7 +794,7 @@ fprintf(fidLog, 'Foldername_TPMs=%s\n', Foldername_TPMs);
 fprintf(fidLog, 'FirstimageType=%d, SubtractionType=%d, SubtractionOrder=%d \n', FirstimageType, SubtractionType,SubtractionOrder);
 fprintf(fidLog, 'Timeshift=%d, AslType=%d, MagType=%d, LabelEfficiency=%f \n', Timeshift, AslType,MagType, labeff);
 fprintf(fidLog, 'Labeltime_ms=%f, Delaytime_ms=%f, Slicetime_ms=%f, TE_ms=%f \n', Labeltime,Delaytime,Slicetime,TE);
-fprintf(fidLog, 'M0csf=%f, M0wm=%f, threshold=%f, effective M0b=%f \n', M0csf,M0wm,threshold,M0b);
+fprintf(fidLog, 'M0csf=%f, M0wm=%f, threshold=%f, effective M0b=%f, T1_b=%f \n', M0csf,M0wm,threshold,M0b,BloodT1);
 fprintf(fidLog, 'OutlierThresholds= [');
 fprintf(fidLog, ' %i',OutlierThresholds);
 fprintf(fidLog, ']\n');

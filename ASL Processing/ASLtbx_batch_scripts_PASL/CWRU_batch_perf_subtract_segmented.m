@@ -37,6 +37,39 @@ function CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, SegmentByT
          str   = sprintf('-- processing subject/condition: #%d/%d  (''%s''/''%s'')',s, c,PAR.subjects{s},PAR.sessionfilters{c} );
          fprintf(fidLog, '%s\n',str);
 
+
+         %look for a file with special processing settings.  If found, read
+         %into name value list.  TF 24 Nov 2020
+         % I added this code to support some more advanced processing
+         % options, such as changing the T1blood for diffent ASL images.
+         % This processing settings file could easily be used to replace
+         % other options, such as the OutlierMode stuff... really, all of
+         % the special parameters that we are currently passing in on the
+         % command line into this procedure could be placed in this  
+         % processing settings file.  But I'm not going to do that now...
+         % no strong motivation to revise stuff that is already working.
+         % TF 24 Nov 2020
+         processing_settings = struct([]) ;  %create empty structure
+         processing_settings_filename = fullfile(PAR.condirs{s,c},'processing_settings.txt');   
+         if isfile(processing_settings_filename)
+            fid = fopen(processing_settings_filename);
+            settingline = fgetl(fid);
+            while ischar(settingline) %when reaches EOF, settingline will be a numeric type with value -1
+                settingline_nocomment =  strsplit(settingline,'%');
+                settingline_nocomment = strtrim(settingline_nocomment{1});
+                if ~isempty(settingline_nocomment)
+                    settings_parts = strsplit(settingline_nocomment,'=');
+                    if size(settings_parts,2)<2  %if only one setting part (something like "Variable" )
+                        settings_parts{1,2}='';  %set the second part to empty string
+                    end
+                    setting_this = struct('Name',strtrim(settings_parts{1,1}),'Value',strtrim(settings_parts{1,2}));
+                    processing_settings = [processing_settings, setting_this]; 
+                end
+                settingline = fgetl(fid);
+            end
+            fclose(fid);            
+         end
+         
          %for input select the smoothed, ASL, filtered, outlier-excluded,
          %realigned PASL/PCASL nii file
          P =  spm_select('ExtFPList', PAR.condirs{s,c}, ['^sASLflt_oe_r'  PAR.confilters{c} '\.nii'], 1:1000 );
@@ -143,6 +176,7 @@ function CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, SegmentByT
          M0csf = [];
          M0wm = [];
          threshold = [];
+         T1blood= [];
          
          if (OutlierMode<=4)
          elseif (OutlierMode==5)
@@ -213,12 +247,26 @@ function CWRU_batch_perf_subtract_segmented(PAR, fidLog, OutlierMode, SegmentByT
              Foldername_TPMs = PAR.structdir{s};
          end
          
+         %look for special settings that were read from the local
+         %processing_settings file.
+         for i=1:length(processing_settings)
+            switch processing_settings(i).Name
+               case 'T1blood'
+                  T1blood = str2double(processing_settings(i).Value)
+            end             
+         end
+             
+         
+         
+         
+         
          CWRU_perf_subtract(P, 0, 0, ...
             SubtractionOrder,     Flags, ...
             0.5,     ASL_Type,      Labeling_Efficiency, 1,...
             Labeltime_ms/1000, Delaytime_ms/1000, Slicetime_ms, TE_ms, M0img, [], maskimg, ...
             M0csf, M0wm, threshold, ...
-            Foldername_TPMs , OutlierThresholds, PrecomputedCBF_File, PrecomputedCBF_Scaling);
+            Foldername_TPMs , OutlierThresholds, PrecomputedCBF_File, PrecomputedCBF_Scaling, ...
+            T1blood);
 
       end
    end
