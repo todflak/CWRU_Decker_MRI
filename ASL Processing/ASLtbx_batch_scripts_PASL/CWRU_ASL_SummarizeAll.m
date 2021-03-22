@@ -21,7 +21,7 @@
 %An example call:
 % CWRU_ASL_SummarizeAll('C:\Users\Tod\Documents\BioAutomatix\Clients\Decker\MRI Processing\Example data\Chronic Fatigue', ['WM\WM_post'], 'C:\Users\Tod\Documents\BioAutomatix\Clients\Decker\MRI Processing\Example data\Chronic Fatigue\WM\WM_post\ASL_Summarize_Log.txt')
 
-function CWRU_ASL_SummarizeAll(Data_Root, Study_Folders_ToProcess, LabelDescriptionMatLabFile, LogFilename, ExcelFilename) 
+function CWRU_ASL_SummarizeAll(Data_Root, ASL_Type, Study_Folders_ToProcess, LabelDescriptionMatLabFile, LogFilename, ExcelFilename) 
    clear global PAR
    
    global fidLog
@@ -32,6 +32,7 @@ function CWRU_ASL_SummarizeAll(Data_Root, Study_Folders_ToProcess, LabelDescript
 
    fprintf(fidLog,'%s: CWRU_ASL_SummarizeAll, starting processing.\n', datestr(datetime('now')));
    fprintf(fidLog,'Data_Root:%s\n', Data_Root);
+   fprintf(fidLog,'ASL_Type:%i\n', ASL_Type);
    fprintf(fidLog,'Study_Folders_ToProcess:\n%s\n', char(Study_Folders_ToProcess));
    fprintf(fidLog,'LabelDescriptionMatLabFile:%s\n', LabelDescriptionMatLabFile);
 
@@ -48,8 +49,8 @@ function CWRU_ASL_SummarizeAll(Data_Root, Study_Folders_ToProcess, LabelDescript
    try
       %set the parameters
       PAR=[];  %make sure it is cleared so will be rebuilt
-      PAR = par(Data_Root, Study_Folders_ToProcess);
-
+      PAR = par(Data_Root, Study_Folders_ToProcess, ASL_Type);
+  
       %Produce the resliced files
       %Before we do that, for each subject, look for a Brainsuite folder,
       %search for '*svreg.label.nii' which we should change into non-rotated 
